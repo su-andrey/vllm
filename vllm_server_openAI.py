@@ -1,15 +1,18 @@
+import os
 import subprocess
 import time
 from threading import Thread
-import torch
+
 import requests
+import torch
 from openai import OpenAI
-import os
-# !pip install -U vllm torch
+# !pip install - U vllm torch
 # Строка для удобной установки и обновления в коллабе, можно так же скачивать через терминал
 port = 8000  # Можно выбрать любой другой порт, втч и при запуске из терминала
 torch.cuda.empty_cache()
 os.system("pkill -f 'vllm.entrypoints.openai.api_server'")
+
+
 def run_server():  # Запускаем сервер отдельным потоком, можно из терминала, но что-то в коллабе не пошло, нашёл такую альтернативу.
     # Для запуска из консоли можноо ввести python -m vllm.entrypoints.openai.api_server --model "TinyLlama/TinyLlama-1.1B-Chat-v1.0" --host 0.0.0.0 --port 8000
     try:
@@ -57,9 +60,12 @@ if is_server_ready(max_time):
             response = client.chat.completions.create(
                 model="TinyLlama/TinyLlama-1.1B-Chat-v1.0",
                 messages=[{"role": "user", "content": question}],
-                max_tokens=50
+                stream=True,
+                max_tokens=100
             )
-            print("Ответ модели:", response.choices[0].message.content)
+            print("Ответ модели:", end=" ")
+            for state in response:
+                print(state.choices[0].delta.content, end="", flush=True)
             print("-" * 50)
         except Exception as e:
             print(
